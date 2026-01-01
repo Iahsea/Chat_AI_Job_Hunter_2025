@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # AI Configuration
     ai_model: str = "gemini-3-flash-preview"
     ai_temperature: float = 0.7
-    ai_max_tokens: int = 500
+    ai_max_tokens: int = 800  # Giới hạn response tokens (tránh timeout)
     
     class Config:
         env_file = ".env"

@@ -13,7 +13,19 @@ class GeminiService:
         """Khởi tạo Gemini client"""
         settings = get_settings()
         genai.configure(api_key=settings.GEMINI_API_KEY)
-        self.model = genai.GenerativeModel(settings.ai_model)
+        
+        # Cấu hình generation với giới hạn token
+        generation_config = {
+            "temperature": settings.ai_temperature,
+            "max_output_tokens": settings.ai_max_tokens,  # Giới hạn output
+            "top_p": 0.95,
+        }
+        
+        self.model = genai.GenerativeModel(
+            settings.ai_model,
+            generation_config=generation_config
+        )
+        print(f"✅ Gemini initialized (max tokens: {settings.ai_max_tokens})")
     
     def build_conversation(
         self, 
@@ -56,7 +68,11 @@ class GeminiService:
         Raises:
             Exception: Nếu có lỗi khi gọi API
         """
-        response = self.model.generate_content(conversation)
+        # Thêm timeout 30s để tránh request bị treo
+        response = self.model.generate_content(
+            conversation,
+            request_options={"timeout": 30}
+        )
         return response.text
     
     def chat(self, message: str, conversation_history: List[Dict] = None) -> str:
