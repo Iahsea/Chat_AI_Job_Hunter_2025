@@ -109,8 +109,9 @@ class OpenRouterService:
         # Giới hạn lịch sử chỉ giữ 5 tin nhắn gần nhất để tránh prompt quá dài
         conversation_history = conversation_history[-5:] if len(conversation_history) > 5 else conversation_history
 
-        # Truy xuất công việc bằng vector search (chỉ lấy top 3 job liên quan nhất)
-        jobs = search_jobs_vector(message, top_k=3)
+        # Truy xuất công việc bằng vector search (chỉ lấy top 5 job liên quan nhất)
+        jobs = search_jobs_vector(message, top_k=5)
+        print(f"\n🔍 ********** Found: {jobs}")
         jobs_info = "\n".join([f"- {job}" for job in jobs]) if jobs else ""
         
         # Xây dựng messages
@@ -120,7 +121,7 @@ class OpenRouterService:
         print("\n" + "=" * 50)
         print("📝 Messages sent to OpenRouter:")
         for msg in messages:
-            print(f"{msg['role']}: {msg['content'][:100]}...")
+            print(f"{msg['role']}: {msg['content']}")
         print("=" * 50)
         
         # Gọi API

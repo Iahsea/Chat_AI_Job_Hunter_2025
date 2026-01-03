@@ -7,7 +7,11 @@ collection = client.get_or_create_collection("jobs")
 
 # Hàm thêm công việc vào vector DB
 def add_job_to_vector(job_id: str, job_text: str):
-    collection.add(
+    """
+    Thêm hoặc cập nhật công việc vào vector DB.
+    Sử dụng upsert để tự động update nếu job_id đã tồn tại.
+    """
+    collection.upsert(
         documents=[job_text],
         ids=[job_id]
     )
