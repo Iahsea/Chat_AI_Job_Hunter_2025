@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     
     # API Keys
     GEMINI_API_KEY: str
+    OPENAI_API_KEY: str = ""
+    OPENROUTER_API_KEY: str = ""
     
     # Server Configuration
     host: str = "0.0.0.0"
@@ -19,9 +21,19 @@ class Settings(BaseSettings):
     allowed_origins: list = ["http://localhost:4200"]
     
     # AI Configuration
-    ai_model: str = "gemini-3-flash-preview"
+    # ai_service: str = "gemini"  # 'gemini', 'openai', or 'openrouter'
+    # ai_model: str = "gemini-3-flash-preview"  # hoặc 'gpt-3.5-turbo', 'gpt-4', 'xiaomi/mimo-v2-flash:free'
+    ai_service: str = "openrouter"  # 'gemini', 'openai', or 'openrouter'
+    ai_model: str = "xiaomi/mimo-v2-flash:free"  # Model miễn phí từ OpenRouter
     ai_temperature: float = 0.7
     ai_max_tokens: int = 800  # Giới hạn response tokens (tránh timeout)
+
+    # Database Configuration
+    db_host: str = "localhost"
+    db_port: int = 3306
+    db_name: str = "jobhunter"
+    db_user: str = "root"
+    db_password: str = "@haideptrai123"
     
     class Config:
         env_file = ".env"

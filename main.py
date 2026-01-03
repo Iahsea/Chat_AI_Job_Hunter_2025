@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 from config import get_settings
 from routes.chat import router as chat_router
+from routes.vector import router as vector_router
 
 # Load environment variables
 load_dotenv()
@@ -32,6 +33,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(chat_router)
+app.include_router(vector_router)
 
 if __name__ == "__main__":
     import uvicorn

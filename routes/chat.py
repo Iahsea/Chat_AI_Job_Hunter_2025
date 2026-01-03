@@ -4,6 +4,8 @@ Chat API routes
 from fastapi import APIRouter, HTTPException
 from models import ChatRequest, ChatResponse, HealthResponse
 from services.gemini_service import get_gemini_service
+from services.openai_service import get_openai_service
+from services.openrouter_service import get_openrouter_service
 from config import get_settings
 
 router = APIRouter()
@@ -53,9 +55,21 @@ async def chat(request: ChatRequest):
         print(f"Message: {request.message}")
         print(f"History length: {len(request.conversation_history)}")
         
-        # Lấy Gemini service và chat
-        gemini_service = get_gemini_service()
-        ai_response = gemini_service.chat(
+        # Lấy settings và chọn service phù hợp
+        settings = get_settings()
+        
+        if settings.ai_service == "openai":
+            print("Using OpenAI service")
+            ai_service = get_openai_service()
+        elif settings.ai_service == "openrouter":
+            print("Using OpenRouter service (Free model)")
+            ai_service = get_openrouter_service()
+        else:
+            print("Using Gemini service")
+            ai_service = get_gemini_service()
+        
+        # Chat với AI
+        ai_response = ai_service.chat(
             message=request.message,
             conversation_history=request.conversation_history
         )

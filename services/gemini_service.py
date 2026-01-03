@@ -4,6 +4,8 @@ Service xử lý logic gọi Google Gemini API
 import google.generativeai as genai
 from typing import List, Dict
 from config import get_settings, SYSTEM_PROMPT
+from services.vector_service import search_jobs_vector
+
 
 
 class GeminiService:
@@ -30,7 +32,8 @@ class GeminiService:
     def build_conversation(
         self, 
         message: str, 
-        conversation_history: List[Dict]
+        conversation_history: List[Dict],
+        jobs_info: str = ""
     ) -> str:
         """
         Xây dựng chuỗi conversation từ lịch sử và tin nhắn mới
@@ -43,6 +46,11 @@ class GeminiService:
             str: Chuỗi conversation đầy đủ để gửi cho AI
         """
         conversation = SYSTEM_PROMPT + "\n\n"
+
+        if jobs_info:
+            conversation += f"Các công việc phù hợp từ hệ thống:\n{jobs_info}\n\n"
+        else:
+            conversation += "Lưu ý: Hiện tại chưa tìm thấy công việc cụ thể trong cơ sở dữ liệu. Hãy tư vấn chung hoặc hỏi thêm thông tin.\n\n"
         
         # Thêm lịch sử hội thoại
         if conversation_history:
@@ -89,8 +97,15 @@ class GeminiService:
         if conversation_history is None:
             conversation_history = []
         
+        # Giới hạn lịch sử chỉ giữ 5 tin nhắn gần nhất để tránh prompt quá dài
+        conversation_history = conversation_history[-5:] if len(conversation_history) > 5 else conversation_history
+
+        # Truy xuất công việc bằng vector search (chỉ lấy top 3 job liên quan nhất)
+        jobs = search_jobs_vector(message, top_k=3)
+        jobs_info = "\n".join([f"- {job}" for job in jobs]) if jobs else ""
+        
         # Xây dựng conversation
-        conversation = self.build_conversation(message, conversation_history)
+        conversation = self.build_conversation(message, conversation_history, jobs_info)
         
         # Debug log (optional)
         print("\n" + "=" * 50)
