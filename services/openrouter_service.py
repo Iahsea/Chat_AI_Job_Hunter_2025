@@ -111,7 +111,6 @@ class OpenRouterService:
 
         # Truy xuất công việc bằng vector search (chỉ lấy top 5 job liên quan nhất)
         jobs = search_jobs_vector(message, top_k=5)
-        print(f"\n🔍 ********** Found: {jobs}")
         jobs_info = "\n".join([f"- {job}" for job in jobs]) if jobs else ""
         
         # Xây dựng messages
