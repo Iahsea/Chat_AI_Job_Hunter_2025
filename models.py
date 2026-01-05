@@ -49,3 +49,31 @@ class HealthResponse(BaseModel):
     """Response cho health check endpoint"""
     status: str
     gemini_configured: bool
+
+
+class CVAnalysisResponse(BaseModel):
+    """Response từ phân tích CV"""
+    success: bool = Field(..., description="Trạng thái phân tích")
+    email: Optional[str] = Field(None, description="Email từ CV")
+    phone: Optional[str] = Field(None, description="Số điện thoại")
+    skills: List[str] = Field(default=[], description="Danh sách kỹ năng")
+    experience_years: Optional[int] = Field(None, description="Số năm kinh nghiệm")
+    message: Optional[str] = Field(None, description="Thông báo")
+    error: Optional[str] = Field(None, description="Lỗi nếu có")
+
+
+class JobRecommendation(BaseModel):
+    """Một công việc được gợi ý"""
+    job_id: str = Field(..., description="ID công việc")
+    description: str = Field(..., description="Mô tả công việc")
+    relevance_score: float = Field(..., description="Độ phù hợp (0-1)")
+
+
+class JobRecommendationResponse(BaseModel):
+    """Response chứa danh sách công việc gợi ý"""
+    success: bool = Field(..., description="Trạng thái")
+    jobs: List[JobRecommendation] = Field(default=[], description="Danh sách công việc")
+    total: int = Field(..., description="Tổng số công việc tìm thấy")
+    cv_summary: Dict = Field(default={}, description="Tóm tắt thông tin CV")
+    message: Optional[str] = Field(None, description="Thông báo")
+

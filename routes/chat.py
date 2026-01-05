@@ -1,12 +1,15 @@
 """
 Chat API routes
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, File, UploadFile, Form
+from typing import Optional, List, Dict
 from models import ChatRequest, ChatResponse, HealthResponse
 from services.gemini_service import get_gemini_service
 from services.openai_service import get_openai_service
 from services.openrouter_service import get_openrouter_service
+from services.cv_service import get_cv_service
 from config import get_settings
+import json
 
 router = APIRouter()
 
@@ -33,27 +36,59 @@ async def health_check():
     )
 
 
-@router.post("/api/chat", response_model=ChatResponse, tags=["Chat"])
-async def chat(request: ChatRequest):
+@router.post("/api/chat", tags=["Chat"])
+async def chat(
+    message: str = Form(...),
+    conversation_history: str = Form(default="[]"),
+    file: Optional[UploadFile] = File(None)
+):
     """
-    Main chatbot endpoint
+    Main chatbot endpoint - Hỗ trợ upload CV PDF kèm message
     
-    Nhận tin nhắn từ user và trả về phản hồi từ AI (Google Gemini)
+    Nhận tin nhắn từ user, có thể kèm file CV PDF.
+    - Nếu có file CV: trích xuất text và đưa vào context cho AI xử lý
+    - Nếu không có file: chat bình thường
     
     Args:
-        request: ChatRequest chứa message và conversation_history
+        message: Tin nhắn từ user
+        conversation_history: Lịch sử chat dạng JSON string (mặc định: [])
+        file: File CV PDF (optional)
         
     Returns:
-        ChatResponse: Chứa response từ AI và success status
-        
-    Raises:
-        HTTPException: Nếu có lỗi khi xử lý
+        ChatResponse với câu trả lời từ AI
     """
     try:
         # Log request
         print("\n🚀 New Chat Request Received")
-        print(f"Message: {request.message}")
-        print(f"History length: {len(request.conversation_history)}")
+        print(f"Message: {message}")
+        print(f"Has file: {file is not None}")
+        
+        # Parse conversation history
+        try:
+            history = json.loads(conversation_history)
+        except:
+            history = []
+        
+        print(f"History length: {len(history)}")
+        
+        # XỬ LÝ FILE CV NẾU CÓ
+        cv_text = ""
+        if file and file.filename.lower().endswith('.pdf'):
+            print("📄 Đang xử lý file CV...")
+            try:
+                content = await file.read()
+                cv_service = get_cv_service()
+                cv_text = cv_service.extract_text_from_pdf(content)
+                
+                if cv_text and len(cv_text) >= 50:
+                    print(f"✅ Đã trích xuất {len(cv_text)} ký tự từ CV")
+                    # Thêm context CV vào message
+                    message = f"Dựa vào nội dung CV sau đây:\n\n{cv_text}\n\n---\n\nCâu hỏi/Yêu cầu của tôi: {message}"
+                else:
+                    print("⚠️ CV quá ngắn hoặc không đọc được")
+            except Exception as e:
+                print(f"❌ Lỗi khi xử lý CV: {e}")
+                # Nếu lỗi khi đọc CV, vẫn tiếp tục chat bình thường
         
         # Lấy settings và chọn service phù hợp
         settings = get_settings()
@@ -70,14 +105,20 @@ async def chat(request: ChatRequest):
         
         # Chat với AI
         ai_response = ai_service.chat(
-            message=request.message,
-            conversation_history=request.conversation_history
+            message=message,
+            conversation_history=history
         )
         
-        return ChatResponse(response=ai_response, success=True)
+        return {
+            "response": ai_response,
+            "success": True,
+            "has_cv": bool(cv_text)
+        }
     
     except Exception as e:
         print(f"❌ Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=500,
             detail=f"Error: {str(e)}"

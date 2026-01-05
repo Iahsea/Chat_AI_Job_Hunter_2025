@@ -9,6 +9,7 @@ Chatbot AI hỗ trợ tìm kiếm việc làm thông minh với **RAG (Retrieval
 - 💬 **RAG Pipeline**: Kết hợp vector search với AI để tư vấn việc làm chính xác
 - 📊 **Import Jobs**: Import và vector hóa công việc từ MySQL database
 - 🔄 **Hot-swap AI**: Chuyển đổi AI provider không cần sửa code
+- 📄 **CV Upload**: Upload CV PDF và nhận gợi ý công việc phù hợp (MỚI!)
 
 ## 🚀 Cài đặt
 
