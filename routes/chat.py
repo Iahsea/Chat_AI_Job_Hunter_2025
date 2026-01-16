@@ -4,6 +4,7 @@ Chat API routes
 from fastapi import APIRouter, HTTPException
 from models import ChatRequest, ChatResponse, HealthResponse
 from services.gemini_service import get_gemini_service
+from services.openrouter_service import get_openrouter_service
 from config import get_settings
 
 router = APIRouter()
@@ -54,13 +55,38 @@ async def chat(request: ChatRequest):
         print(f"Message: {request.message}")
         print(f"History length: {len(request.conversation_history)}")
         
-        # Lấy Gemini service và chat
-        gemini_service = get_gemini_service()
-        ai_response = gemini_service.chat(
+        settings = get_settings()
+        import os
+        ai_service = os.getenv('AI_SERVICE', getattr(settings, 'AI_SERVICE', 'gemini')).lower()
+        model = settings.ai_model
+        # Danh sách model hợp lệ cho Gemini
+        gemini_models = ["gemini-1.0-pro", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro-vision", "gemini-1.5-pro-vision"]
+        # Danh sách model hợp lệ cho OpenRouter (ví dụ, có thể mở rộng)
+        openrouter_prefixes = ["mistralai/", "openrouter/", "meta-llama/", "google/", "anthropic/", "xiaomi/"]
+        if ai_service == 'openrouter':
+            # Kiểm tra model có đúng prefix không
+            if not any(model.startswith(prefix) for prefix in openrouter_prefixes):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Model '{model}' không hợp lệ cho OpenRouter. Vui lòng chọn model đúng chuẩn OpenRouter."
+                )
+            service = get_openrouter_service()
+        elif ai_service == 'gemini':
+            if model not in gemini_models:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Model '{model}' không hợp lệ cho Gemini. Vui lòng chọn model đúng chuẩn Gemini."
+                )
+            service = get_gemini_service()
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=f"AI_SERVICE '{ai_service}' không được hỗ trợ."
+            )
+        ai_response = service.chat(
             message=request.message,
             conversation_history=request.conversation_history
         )
-        
         return ChatResponse(response=ai_response, success=True)
     
     except Exception as e:

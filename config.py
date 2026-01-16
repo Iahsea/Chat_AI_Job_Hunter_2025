@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     
     # API Keys
     GEMINI_API_KEY: str
+    OPENROUTER_API_KEY: str
     
     # Server Configuration
     host: str = "0.0.0.0"
@@ -19,7 +20,7 @@ class Settings(BaseSettings):
     allowed_origins: list = ["http://localhost:4200"]
     
     # AI Configuration
-    ai_model: str = "gemini-3-flash-preview"
+    ai_model: str = "xiaomi/mimo-v2-flash:free"
     ai_temperature: float = 0.7
     ai_max_tokens: int = 500
     
