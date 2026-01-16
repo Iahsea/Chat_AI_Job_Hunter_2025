@@ -29,9 +29,7 @@ class OpenRouterService:
         }
         payload = {
             "model": self.model,
-            "messages": conversation,
-            "max_tokens": 500,
-            "temperature": 0.7
+            "messages": conversation
         }
         try:
             response = requests.post(self.api_url, json=payload, headers=headers)
