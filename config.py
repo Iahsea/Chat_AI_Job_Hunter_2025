@@ -23,9 +23,11 @@ class Settings(BaseSettings):
     ai_temperature: float = 0.7
     ai_max_tokens: int = 500
     
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "extra": "allow"
+    }
 
 
 @lru_cache()

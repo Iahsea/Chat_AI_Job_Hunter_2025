@@ -19,8 +19,8 @@ class ChatRequest(BaseModel):
         description="Lịch sử hội thoại trước đó"
     )
     
-    class Config:
-        json_schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "message": "Tôi muốn tìm việc lập trình Python",
                 "conversation_history": [
@@ -29,6 +29,7 @@ class ChatRequest(BaseModel):
                 ]
             }
         }
+    }
 
 
 class ChatResponse(BaseModel):
@@ -36,13 +37,14 @@ class ChatResponse(BaseModel):
     response: str = Field(..., description="Câu trả lời từ AI")
     success: bool = Field(default=True, description="Trạng thái thành công")
     
-    class Config:
-        json_schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "response": "Tôi có thể giúp bạn tìm việc lập trình Python...",
                 "success": True
             }
         }
+    }
 
 
 class HealthResponse(BaseModel):
