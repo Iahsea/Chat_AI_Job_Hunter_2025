@@ -22,10 +22,10 @@ class ChatRequest(BaseModel):
     model_config = {
         "json_schema_extra": {
             "example": {
-                "message": "Tôi muốn tìm việc lập trình Python",
+                "message": "Tôi muốn đặt phòng khách sạn ở Đà Nẵng",
                 "conversation_history": [
                     {"role": "user", "content": "Xin chào"},
-                    {"role": "assistant", "content": "Chào bạn! Tôi có thể giúp gì?"}
+                    {"role": "assistant", "content": "Chào bạn! Tôi là trợ lý đặt phòng khách sạn. Tôi có thể giúp gì cho bạn?"}
                 ]
             }
         }
@@ -40,7 +40,7 @@ class ChatResponse(BaseModel):
     model_config = {
         "json_schema_extra": {
             "example": {
-                "response": "Tôi có thể giúp bạn tìm việc lập trình Python...",
+                "response": "Tuyệt vời! Đà Nẵng có nhiều khách sạn đẹp. Bạn muốn đặt phòng cho bao nhiêu người và trong khoảng thời gian nào ạ?",
                 "success": True
             }
         }

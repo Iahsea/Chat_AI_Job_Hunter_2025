@@ -1,5 +1,6 @@
 """
-AI JobHunter Chatbot - Main Application
+AI Hotel Booking Chatbot - Main Application
+Hệ thống chatbot AI hỗ trợ đặt phòng khách sạn
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,9 +17,9 @@ settings = get_settings()
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="AI JobHunter Chatbot",
+    title="AI Hotel Booking Chatbot",
     version="1.0.0",
-    description="AI Chatbot hỗ trợ tìm kiếm việc làm sử dụng Google Gemini"
+    description="AI Chatbot hỗ trợ tư vấn và đặt phòng khách sạn sử dụng Google Gemini"
 )
 
 # Configure CORS

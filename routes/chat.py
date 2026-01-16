@@ -14,8 +14,9 @@ async def root():
     """Root endpoint - Health check đơn giản"""
     return {
         "status": "ok",
-        "message": "AI JobHunter Chatbot is running!",
-        "version": "1.0.0"
+        "message": "AI Hotel Booking Chatbot is running! 🏨",
+        "version": "1.0.0",
+        "description": "Hệ thống chatbot AI hỗ trợ tư vấn và đặt phòng khách sạn"
     }
 
 

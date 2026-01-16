@@ -1,36 +1,54 @@
-# AI JobHunter Chatbot
+# AI Hotel Booking Chatbot
 
-Chatbot AI hỗ trợ tìm kiếm việc làm, được xây dựng bằng FastAPI và OpenAI API.
+Chatbot AI hỗ trợ tư vấn và đặt phòng khách sạn, được xây dựng bằng FastAPI và Google Gemini API.
+
+## 🏨 Tính năng
+
+- **Tư vấn đặt phòng**: Giúp khách hàng tìm khách sạn/phòng phù hợp với nhu cầu
+- **Giải đáp thông tin**: Trả lời câu hỏi về khách sạn, loại phòng, tiện ích, chính sách
+- **Hỗ trợ đặt phòng**: Hướng dẫn quy trình đặt phòng, thanh toán, hủy phòng
+- **Gợi ý điểm đến**: Tư vấn các điểm du lịch, khách sạn theo mùa, theo sự kiện
 
 ## 🚀 Cài đặt
 
-### 1. Cài đặt dependencies
+### 1. Tạo môi trường ảo
+
+```bash
+python -m venv venv
+
+# Windows (Command Prompt)
+venv\Scripts\activate
+
+# Windows (PowerShell)
+.\venv\Scripts\Activate.ps1
+
+# Linux/Mac
+source venv/bin/activate
+```
+
+### 2. Cài đặt dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Cấu hình OpenAI API Key
+### 3. Cấu hình Google Gemini API Key
 
-1. Tạo file `.env` từ `.env.example`:
+1. Tạo file `.env`:
 
 ```bash
-cp .env.example .env
+copy .env.example .env
 ```
 
-2. Lấy API key từ [OpenAI Platform](https://platform.openai.com/api-keys)
+2. Lấy API key từ [Google AI Studio](https://makersuite.google.com/app/apikey)
 
 3. Cập nhật file `.env`:
 
 ```
-OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxx
+GEMINI_API_KEY=your_api_key_here
 ```
 
 ## 🏃 Chạy ứng dụng
-
-# Kích hoạt venv trước khi chạy
-
-source venv/Scripts/activate
 
 ### Cách 1: Chạy trực tiếp
 
@@ -42,10 +60,11 @@ python main.py
 
 ```bash
 uvicorn main:app --reload
-
 ```
 
 Server sẽ chạy tại: `http://localhost:8000`
+
+Swagger UI: `http://localhost:8000/docs`
 
 ## 📚 API Endpoints
 
@@ -55,6 +74,17 @@ Server sẽ chạy tại: `http://localhost:8000`
 GET /
 ```
 
+Response:
+
+```json
+{
+  "status": "ok",
+  "message": "AI Hotel Booking Chatbot is running! 🏨",
+  "version": "1.0.0",
+  "description": "Hệ thống chatbot AI hỗ trợ tư vấn và đặt phòng khách sạn"
+}
+```
+
 ### 2. Chat với AI
 
 ```
@@ -62,7 +92,7 @@ POST /api/chat
 Content-Type: application/json
 
 {
-  "message": "Tôi muốn tìm việc lập trình viên Python",
+  "message": "Tôi muốn đặt phòng khách sạn ở Đà Nẵng",
   "conversation_history": []
 }
 ```
@@ -71,15 +101,24 @@ Response:
 
 ```json
 {
-  "response": "Xin chào! Tôi có thể giúp bạn tìm việc lập trình viên Python...",
+  "response": "Tuyệt vời! Đà Nẵng có nhiều khách sạn đẹp. Bạn muốn đặt phòng cho bao nhiêu người và trong khoảng thời gian nào ạ?",
   "success": true
 }
 ```
 
-### 3. Health Check
+### 3. Health Check chi tiết
 
 ```
 GET /api/health
+```
+
+Response:
+
+```json
+{
+  "status": "healthy",
+  "gemini_configured": true
+}
 ```
 
 ## 🔗 Tích hợp với Angular
@@ -91,6 +130,21 @@ import { Injectable } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { Observable } from "rxjs";
 
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface ChatRequest {
+  message: string;
+  conversation_history: ChatMessage[];
+}
+
+export interface ChatResponse {
+  response: string;
+  success: boolean;
+}
+
 @Injectable({
   providedIn: "root",
 })
@@ -99,11 +153,12 @@ export class ChatbotService {
 
   constructor(private http: HttpClient) {}
 
-  sendMessage(message: string, history: any[] = []): Observable<any> {
-    return this.http.post(`${this.apiUrl}/chat`, {
-      message: message,
-      conversation_history: history,
-    });
+  chat(request: ChatRequest): Observable<ChatResponse> {
+    return this.http.post<ChatResponse>(`${this.apiUrl}/chat`, request);
+  }
+
+  healthCheck(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/health`);
   }
 }
 ```
@@ -112,89 +167,120 @@ export class ChatbotService {
 
 ```typescript
 import { Component } from "@angular/core";
-import { ChatbotService } from "./chatbot.service";
+import { ChatbotService, ChatMessage, ChatResponse } from "./chatbot.service";
 
 @Component({
   selector: "app-chatbot",
-  templateUrl: "./chatbot.component.html",
+  template: `
+    <div class="chat-container">
+      <div class="messages">
+        <div *ngFor="let msg of messages" [class]="msg.role">
+          {{ msg.content }}
+        </div>
+      </div>
+      <div class="input-area">
+        <input
+          [(ngModel)]="userInput"
+          (keyup.enter)="sendMessage()"
+          placeholder="Hỏi về khách sạn..."
+        />
+        <button (click)="sendMessage()" [disabled]="isLoading">
+          {{ isLoading ? "Đang xử lý..." : "Gửi" }}
+        </button>
+      </div>
+    </div>
+  `,
 })
 export class ChatbotComponent {
-  messages: any[] = [];
-  userMessage: string = "";
+  messages: ChatMessage[] = [];
+  userInput = "";
+  isLoading = false;
 
   constructor(private chatbotService: ChatbotService) {}
 
   sendMessage() {
-    if (!this.userMessage.trim()) return;
+    if (!this.userInput.trim() || this.isLoading) return;
 
-    // Thêm tin nhắn user
-    this.messages.push({ role: "user", content: this.userMessage });
+    const userMessage: ChatMessage = {
+      role: "user",
+      content: this.userInput,
+    };
+    this.messages.push(userMessage);
+    this.isLoading = true;
 
-    // Gọi API chatbot
-    this.chatbotService.sendMessage(this.userMessage, this.messages).subscribe({
-      next: (response) => {
-        this.messages.push({ role: "assistant", content: response.response });
-      },
-      error: (error) => {
-        console.error("Error:", error);
-      },
-    });
+    this.chatbotService
+      .chat({
+        message: this.userInput,
+        conversation_history: this.messages.slice(0, -1),
+      })
+      .subscribe({
+        next: (response: ChatResponse) => {
+          this.messages.push({
+            role: "assistant",
+            content: response.response,
+          });
+          this.isLoading = false;
+        },
+        error: (err) => {
+          console.error(err);
+          this.isLoading = false;
+        },
+      });
 
-    this.userMessage = "";
+    this.userInput = "";
   }
 }
 ```
 
-## 🔐 Tích hợp với Spring Boot
+## 🗄️ Cơ sở dữ liệu hỗ trợ
 
-Nếu bạn muốn Spring Boot làm proxy cho chatbot (để thống nhất authentication):
+Chatbot được thiết kế để tích hợp với hệ thống Hotel Booking System với các bảng:
 
-### Spring Boot Controller
+- **hotels**: Thông tin khách sạn (tên, địa chỉ, rating, tiện ích)
+- **room_types**: Loại phòng (Standard, Deluxe, Suite, Villa...)
+- **amenities**: Tiện nghi (WiFi, điều hòa, minibar, view biển...)
+- **bookings**: Đặt phòng
+- **payments**: Thanh toán
+- **reviews**: Đánh giá
 
-```java
-@RestController
-@RequestMapping("/api/chatbot")
-public class ChatbotController {
+## 📝 Ví dụ hội thoại
 
-    private final RestTemplate restTemplate = new RestTemplate();
-    private static final String CHATBOT_URL = "http://localhost:8000/api/chat";
+```
+User: Xin chào
+Bot: Chào bạn! 🏨 Tôi là trợ lý đặt phòng khách sạn. Tôi có thể giúp gì cho bạn hôm nay?
 
-    @PostMapping("/chat")
-    public ResponseEntity<?> chat(@RequestBody ChatRequest request) {
-        // Có thể thêm authentication check ở đây
+User: Tôi muốn đặt phòng ở Đà Nẵng cho 2 người
+Bot: Tuyệt vời! Đà Nẵng là điểm đến tuyệt đẹp! 🌊 Bạn có thể cho tôi biết thêm:
+- Ngày check-in và check-out?
+- Ngân sách khoảng bao nhiêu/đêm?
+- Bạn có yêu cầu đặc biệt nào không (view biển, gần trung tâm...)?
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+User: Từ 20-22/1, ngân sách khoảng 2 triệu/đêm, muốn view biển
+Bot: Với yêu cầu của bạn, tôi gợi ý một số khách sạn:
+1. **Grand Aurora Riverside Hotel** ⭐⭐⭐⭐
+   - Phòng Deluxe River View: 1,950,000đ/đêm
+   - Tiện nghi: WiFi, điều hòa, minibar, ban công view sông
+2. **Ocean Blue Resort** ⭐⭐⭐⭐⭐
+   - Phòng Standard Ocean View: 2,400,000đ/đêm
+   - Tiện nghi: View biển trực tiếp, hồ bơi, spa
 
-        HttpEntity<ChatRequest> entity = new HttpEntity<>(request, headers);
-
-        return restTemplate.postForEntity(CHATBOT_URL, entity, ChatResponse.class);
-    }
-}
+Bạn muốn tôi cung cấp thêm thông tin chi tiết về khách sạn nào?
 ```
 
-## 📝 Lưu ý
+## 🔧 Cấu hình nâng cao
 
-1. **CORS**: Đã cấu hình cho phép Angular (localhost:4200) gọi API
-2. **API Key**: Không commit file `.env` lên Git (đã có trong `.gitignore`)
-3. **Rate Limit**: OpenAI có giới hạn request, cân nhắc cache hoặc rate limiting
-4. **Production**: Thay đổi `allow_origins` khi deploy production
+### File config.py
 
-## 🛠️ Mở rộng
+```python
+# AI Configuration
+ai_model: str = "gemini-2.0-flash"
+ai_temperature: float = 0.7
+ai_max_tokens: int = 500
 
-### Thêm tính năng lưu lịch sử chat
+# CORS - Thêm domain frontend của bạn
+allowed_origins: list = ["http://localhost:4200", "https://yourdomain.com"]
+```
 
-- Tích hợp database (PostgreSQL, MongoDB)
-- Lưu conversation history theo user_id
+## 📄 License
 
-### Tùy chỉnh AI behavior
-
-- Sửa `SYSTEM_PROMPT` trong `main.py`
-- Thay đổi model: `gpt-4` cho kết quả tốt hơn
-- Điều chỉnh `temperature` và `max_tokens`
-
-### Thêm authentication
-
-- JWT token verification
-- Rate limiting per user
-# Chat_AI_Job_Hunter_2025
+MIT License
